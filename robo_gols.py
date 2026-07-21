@@ -1,4 +1,3 @@
-import os
 import requests
 
 token = "8924431376:AAHtUD9kI_gQRTTFSzRSZvtii8uX9cM-qF4"
