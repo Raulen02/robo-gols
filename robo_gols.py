@@ -1,37 +1,38 @@
 import os
-from flask import Flask, request
+from flask import Flask
+import threading
+import time
 import requests
 
 app = Flask(__name__)
 
 TOKEN = "8924431376:AAHtUD9kI_gQRTTFSzRSZvtii8uX9cM-qF4"
-# URL gerada pelo Render para o seu projeto
-RENDER_URL = "https://robo-gols-3gnz.onrender.com"
+CHAT_ID = "519222308"
 
 @app.route('/')
 def home():
-    # Configura o webhook automaticamente no Telegram ao abrir a página
-    webhook_url = f"{RENDER_URL}/webhook"
-    requests.get(f"https://api.telegram.org/bot{TOKEN}/setWebhook?url={webhook_url}")
-    return "Robo de Gols rodando e Webhook configurado!"
+    return "Robo de Gols rodando ativamente!"
 
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    data = request.get_json()
-    if data and "message" in data:
-        chat_id = data["message"]["chat"]["id"]
-        texto = data["message"].get("text", "")
-        
-        # Responde qualquer mensagem que você mandar no chat
-        url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-        payload = {
-            "chat_id": chat_id, 
-            "text": f"✅ *Robô conectado com sucesso!*\nO seu Chat ID é: `{chat_id}`", 
-            "parse_mode": "Markdown"
-        }
+def loop_envio():
+    # Dá um tempo para o servidor web subir completamente
+    time.sleep(5)
+    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+    
+    # Envia uma mensagem inicial avisando que o robô conectou de vez
+    payload = {
+        "chat_id": CHAT_ID, 
+        "text": "🚨 *Robô de Gols Conectado e Operando com Sucesso!*", 
+        "parse_mode": "Markdown"
+    }
+    try:
         requests.post(url, json=payload)
-            
-    return "ok", 200
+    except Exception as e:
+        print(f"Erro ao enviar: {e}")
+
+# Inicia a thread em segundo plano para mandar a mensagem sem derrubar o site do Render
+thread = threading.Thread(target=loop_envio)
+thread.daemon = True
+thread.start()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
