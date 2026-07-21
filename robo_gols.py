@@ -1,3 +1,4 @@
+import os
 import requests
 
 token = "8924431376:AAHtUD9kI_gQRTTFSzRSZvtii8uX9cM-qF4"
@@ -9,4 +10,3 @@ payload = {"chat_id": chat_id, "text": mensagem, "parse_mode": "Markdown"}
 
 resposta = requests.post(url, json=payload)
 print("Status:", resposta.json())
-
