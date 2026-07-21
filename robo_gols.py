@@ -1,19 +1,29 @@
+import os
+from flask import Flask
+import threading
 import time
 import requests
 
-token = "8924431376:AAHtUD9kI_gQRTTFSzRSZvtii8uX9cM-qF4"
-chat_id = "519222308"
-url = f"https://api.telegram.org/bot{token}/sendMessage"
+app = Flask(__name__)
 
-contador = 0
+@app.route('/')
+def home():
+    return "Robo de Gols rodando com sucesso!"
 
-while True:
-    contador += 1
-    mensagem = f"Teste de conexao numero {contador}"
-    payload = {"chat_id": chat_id, "text": mensagem}
+def enviar_mensagens():
+    token = "8924431376:AAHtUD9kI_gQRTTFSzRSZvtii8uX9cM-qF4"
+    chat_id = "519222308"
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
     
-    resposta = requests.post(url, json=payload)
-    print("Resposta do Telegram:", resposta.json())
-    
-    # Espera 30 segundos antes de enviar a próxima
-    time.sleep(30)
+    # Envia uma mensagem inicial avisando que ligou
+    payload = {"chat_id": chat_id, "text": "🚨 *Robô de Gols Conectado e Ativo!*", "parse_mode": "Markdown"}
+    requests.post(url, json=payload)
+
+# Inicia o robô em segundo plano para manter o servidor web do Render ativo
+thread = threading.Thread(target=enviar_mensagens)
+thread.daemon = True
+thread.start()
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
