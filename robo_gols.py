@@ -5,10 +5,15 @@ import requests
 app = Flask(__name__)
 
 TOKEN = "8924431376:AAHtUD9kI_gQRTTFSzRSZvtii8uX9cM-qF4"
+# URL gerada pelo Render para o seu projeto
+RENDER_URL = "https://robo-gols-3gnz.onrender.com"
 
 @app.route('/')
 def home():
-    return "Robo de Gols rodando com sucesso!"
+    # Configura o webhook automaticamente no Telegram ao abrir a página
+    webhook_url = f"{RENDER_URL}/webhook"
+    requests.get(f"https://api.telegram.org/bot{TOKEN}/setWebhook?url={webhook_url}")
+    return "Robo de Gols rodando e Webhook configurado!"
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -17,15 +22,14 @@ def webhook():
         chat_id = data["message"]["chat"]["id"]
         texto = data["message"].get("text", "")
         
-        # Se você mandar /start, ele responde e te confirma o Chat ID
-        if texto == "/start":
-            url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-            payload = {
-                "chat_id": chat_id, 
-                "text": f"🚨 *Robô Conectado com Sucesso!*\nSeu Chat ID é: `{chat_id}`", 
-                "parse_mode": "Markdown"
-            }
-            requests.post(url, json=payload)
+        # Responde qualquer mensagem que você mandar no chat
+        url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+        payload = {
+            "chat_id": chat_id, 
+            "text": f"✅ *Robô conectado com sucesso!*\nO seu Chat ID é: `{chat_id}`", 
+            "parse_mode": "Markdown"
+        }
+        requests.post(url, json=payload)
             
     return "ok", 200
 
