@@ -13,12 +13,10 @@ CHAT_ID = "519222308"
 def home():
     return "Robo de Gols rodando ativamente!"
 
-def loop_envio():
-    # Dá um tempo para o servidor web subir completamente
-    time.sleep(5)
+def disparar_mensagem():
+    # Aguarda o servidor estabilizar
+    time.sleep(3)
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    
-    # Envia uma mensagem inicial avisando que o robô conectou de vez
     payload = {
         "chat_id": CHAT_ID, 
         "text": "🚨 *Robô de Gols Conectado e Operando com Sucesso!*", 
@@ -27,10 +25,10 @@ def loop_envio():
     try:
         requests.post(url, json=payload)
     except Exception as e:
-        print(f"Erro ao enviar: {e}")
+        print(f"Erro: {e}")
 
-# Inicia a thread em segundo plano para mandar a mensagem sem derrubar o site do Render
-thread = threading.Thread(target=loop_envio)
+# Inicia o envio em segundo plano assim que o aplicativo liga
+thread = threading.Thread(target=disparar_mensagem)
 thread.daemon = True
 thread.start()
 
