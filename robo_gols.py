@@ -15,22 +15,28 @@ RAPID_API_KEY = "79205a9d23msha37725343833c2ep114fc4jsn17b667a6327b"
 
 @app.route('/')
 def home():
-    return "Robo de Gols (Modo Rua / Antecipado) Operacional!"
+    return "Robo de Gols (Modo Rua) Operacional! Acesse /testar para forcar um alerta no Telegram."
+
+@app.route('/testar')
+def testar_envio():
+    url_msg = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+    try:
+        r = requests.post(url_msg, json={
+            "chat_id": CHAT_ID, 
+            "text": "🚨 *[TESTE MANUAL]* \nO robô está conectado e pronto para disparar os alertas na sua rua!", 
+            "parse_mode": "Markdown"
+        })
+        if r.status_code == 200:
+            return "Mensagem de teste enviada com sucesso para o Telegram!"
+        else:
+            return f"Erro ao enviar do Telegram: {r.text}"
+    except Exception as e:
+        return f"Erro: {e}"
 
 def monitorar_jogos_ao_vivo():
     time.sleep(2)
     url_msg = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
     
-    # Mensagem de boas-vindas confirmando a inicialização
-    try:
-        requests.post(url_msg, json={
-            "chat_id": CHAT_ID, 
-            "text": "🟢 *Robô Conectado (Modo Rua / Antecipado)*\n📊 *Novas Métricas:* HT (16'-44') e FT (55'-88') com antecedência para posições seguras!", 
-            "parse_mode": "Markdown"
-        })
-    except Exception as e:
-        print(f"Erro ao enviar mensagem inicial: {e}")
-
     while True:
         try:
             url_api = "https://sofascore.p.rapidapi.com/matches/list-live"
@@ -52,7 +58,6 @@ def monitorar_jogos_ao_vivo():
                     time_casa = evento.get("homeTeam", {}).get("name", "")
                     time_fora = evento.get("awayTeam", {}).get("name", "")
                     
-                    # Puxando o nome do campeonato / liga
                     tournament = evento.get("tournament", {})
                     nome_liga = tournament.get("name", "Campeonato Desconhecido")
                     categoria = tournament.get("category", {}).get("name", "")
@@ -62,10 +67,7 @@ def monitorar_jogos_ao_vivo():
                     placar_fora = evento.get("awayScore", {}).get("current", 0)
                     gols_totais = placar_casa + placar_fora
                     
-                    # =========================================================================
-                    # 🥇 1º TEMPO (HT) - ANTECIPADO (16' a 44' com jogo 0x0)
-                    # Alvo: Entra o aviso cedo (Odd base 1.65) para você estacionar e pegar 1.70+
-                    # =========================================================================
+                    # 1º Tempo (HT) - 16' a 44' com jogo 0x0
                     if gols_totais == 0 and (16 <= minuto <= 44):
                         texto_alerta = (
                             f"🚨 *[ANTECIPADO] OVER 0.5 HT*\n\n"
@@ -76,10 +78,7 @@ def monitorar_jogos_ao_vivo():
                         )
                         requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto_alerta, "parse_mode": "Markdown"})
                     
-                    # =========================================================================
-                    # 🎯 2º TEMPO (FT) - GOL LIMITE (55' a 88' com até 2 gols totais)
-                    # Alvo: Antecipado a partir dos 55' para mercados 0.5, 1.5 e 2.5
-                    # =========================================================================
+                    # 2º Tempo (FT) - 55' a 88' com até 2 gols totais
                     elif 0 <= gols_totais <= 2 and (55 <= minuto <= 88):
                         texto_alerta = (
                             f"🚨 *[ANTECIPADO] GOL LIMITE FT (0.5 / 1.5 / 2.5)*\n\n"
@@ -93,7 +92,7 @@ def monitorar_jogos_ao_vivo():
         except Exception as err:
             print(f"Erro na varredura: {err}")
             
-        time.sleep(60)
+        time.sleep(45) # Reduzido para 45 segundos para varrer mais rápido
 
 thread = threading.Thread(target=monitorar_jogos_ao_vivo)
 thread.daemon = True
