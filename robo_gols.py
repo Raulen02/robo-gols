@@ -6,7 +6,7 @@ import requests
 
 app = Flask(__name__)
 
-TOKEN = "8924431376:AAHtUD9kI_gQRTTFSzRSZvtii8uX9cM-qF4"
+TOKEN = "8924431376:AAHTuD9kI_gQRTTFSzRSZvtii8uX9cM-qF4"
 CHAT_ID = "519222308"
 
 @app.route('/')
