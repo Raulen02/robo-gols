@@ -6,7 +6,7 @@ import requests
 
 app = Flask(__name__)
 
-# Credenciais de conexão do Telegram
+# Credenciais do Telegram corrigidas e validadas
 TOKEN = "8924431376:AAHTuD9kI_gQRTTFSzRSZvtii8uX9cM-qF4"
 CHAT_ID = "519222308"
 
@@ -15,7 +15,7 @@ RAPID_API_KEY = "79205a9d23msha37725343833c2ep114fc4jsn17b667a6327b"
 
 @app.route('/')
 def home():
-    return "Robo de Gols (Modo Rua) Operacional! Acesse /testar para forcar um alerta no Telegram."
+    return "Robo de Gols (Modo Alerta Total) Operacional! Acesse /testar para forcar um alerta."
 
 @app.route('/testar')
 def testar_envio():
@@ -23,7 +23,7 @@ def testar_envio():
     try:
         r = requests.post(url_msg, json={
             "chat_id": CHAT_ID, 
-            "text": "🚨 *[TESTE MANUAL]* \nO robô está conectado e pronto para disparar os alertas na sua rua!", 
+            "text": "🚨 *[TESTE MANUAL]* \nConexão OK! O robô está de olho nos gramados.", 
             "parse_mode": "Markdown"
         })
         if r.status_code == 200:
@@ -67,32 +67,32 @@ def monitorar_jogos_ao_vivo():
                     placar_fora = evento.get("awayScore", {}).get("current", 0)
                     gols_totais = placar_casa + placar_fora
                     
-                    # 1º Tempo (HT) - 16' a 44' com jogo 0x0
-                    if gols_totais == 0 and (16 <= minuto <= 44):
+                    # 1º Tempo Ampliado (15' a 48') com 0x0
+                    if gols_totais == 0 and (15 <= minuto <= 48):
                         texto_alerta = (
-                            f"🚨 *[ANTECIPADO] OVER 0.5 HT*\n\n"
+                            f"🚨 *[RADAR] OVER 0.5 HT*\n\n"
                             f"🏆 *Liga:* {liga_completa}\n"
                             f"⚽ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
                             f"⏱ Minuto: {minuto}' | Placar: 0x0\n"
-                            f"💡 *Aviso de Antecipação (Prepare-se para Odd 1.70+)*"
+                            f"💡 *Fique de olho na Odd!*"
                         )
                         requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto_alerta, "parse_mode": "Markdown"})
                     
-                    # 2º Tempo (FT) - 55' a 88' com até 2 gols totais
-                    elif 0 <= gols_totais <= 2 and (55 <= minuto <= 88):
+                    # 2º Tempo Ampliado (50' a 89') com até 2 gols
+                    elif 0 <= gols_totais <= 2 and (50 <= minuto <= 89):
                         texto_alerta = (
-                            f"🚨 *[ANTECIPADO] GOL LIMITE FT (0.5 / 1.5 / 2.5)*\n\n"
+                            f"🚨 *[RADAR] GOL LIMITE FT (0.5 / 1.5 / 2.5)*\n\n"
                             f"🏆 *Liga:* {liga_completa}\n"
                             f"⚽ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
                             f"⏱ Minuto: {minuto}' | Total de Gols: {gols_totais}\n"
-                            f"💡 *Aviso de Antecipação (Prepare-se para Odd 1.70+)*"
+                            f"💡 *Pressão máxima no segundo tempo!*"
                         )
                         requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto_alerta, "parse_mode": "Markdown"})
                         
         except Exception as err:
             print(f"Erro na varredura: {err}")
             
-        time.sleep(45) # Reduzido para 45 segundos para varrer mais rápido
+        time.sleep(30) # Varredura a cada 30 segundos para ser ultra rápido
 
 thread = threading.Thread(target=monitorar_jogos_ao_vivo)
 thread.daemon = True
