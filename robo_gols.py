@@ -15,21 +15,21 @@ RAPID_API_KEY = "79205a9d23msha37725343833c2ep114fc4jsn17b667a6327b"
 
 @app.route('/')
 def home():
-    return "Robo de Gols Limite (Especialista Odds 1.70+) Operacional!"
+    return "Robo de Gols (Modo Teste Quantitativo) Operacional!"
 
 def monitorar_jogos_ao_vivo():
     time.sleep(5)
     url_msg = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
     
-    # Mensagem de inicialização confirmando o foco em Gols Limite e Odds 1.70+
+    # Mensagem de teste para confirmar que o robô reiniciou no modo quantitativo
     try:
         requests.post(url_msg, json={
             "chat_id": CHAT_ID, 
-            "text": "🟢 *Robô de Gols Limite Ativado!*\n🎯 *Estratégia:* Prioridade Absoluta em **0.5 HT** (20'-44') + **Gol Limite 0.5 e 1.5 FT** (60'-88') com Odd Mínima de 1.70.", 
+            "text": "🟢 *Robô em Modo de Teste Quantitativo Ativado!*\n📊 *Filtros simplificados:* Caçando volume em HT (20'-44') e FT até 2.5 gols (60'-88') para testar os disparos.", 
             "parse_mode": "Markdown"
         })
     except Exception as e:
-        print(f"Erro inicial: {e}")
+        print(f"Erro inicial: {e})"
 
     while True:
         try:
@@ -57,39 +57,27 @@ def monitorar_jogos_ao_vivo():
                     gols_totais = placar_casa + placar_fora
                     
                     # =========================================================================
-                    # 🥇 PRIORIDADE MÁXIMA 1: GOL LIMITE 0.5 HT (PRIMEIRO TEMPO - 20' a 44')
+                    # 🥇 TESTE 1: 1º TEMPO (HT) - 0.5 Gols (20' a 44' com jogo 0x0)
                     # =========================================================================
-                    # Foco total na sua maior fonte de lucro com odds esticadas (1.70+)
                     if gols_totais == 0 and (20 <= minuto <= 44):
                         texto_alerta = (
-                            f"🚨 *ALERTA MESTRE: GOL LIMITE 0.5 HT* 💰\n\n"
+                            f"🧪 *[TESTE] OVER 0.5 HT*\n\n"
                             f"⚽ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
-                            f"⏱ Minuto: {minuto}' (Odd Mínima Alvo: 1.70+)\n"
-                            f"💡 *Critério:* Jogo 0x0 na janela de ouro do primeiro tempo, buscando o gol antes do intervalo!"
+                            f"⏱ Minuto: {minuto}' | Placar: 0x0\n"
+                            f"💡 *Alerta de Volume (Odd Alvo 1.69+)*"
                         )
                         requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto_alerta, "parse_mode": "Markdown"})
                     
                     # =========================================================================
-                    # 🎯 PRIORIDADE MÁXIMA 2: GOL LIMITE 0.5 FT (SEGUNDO TEMPO - 60' a 88')
+                    # 🎯 TESTE 2: 2º TEMPO (FT) - Mercados Limite (0.5, 1.5 e 2.5) de 60' a 88'
+                    # O jogo só pode ter no máximo 2 gols totais para respeitar o limite de 2.5
                     # =========================================================================
-                    elif gols_totais == 0 and (60 <= minuto <= 88):
+                    elif 0 <= gols_totais <= 2 and (60 <= minuto <= 88):
                         texto_alerta = (
-                            f"🎯 *ALERTA: GOL LIMITE 0.5 FT (2º Tempo)* 📊\n\n"
+                            f"🧪 *[TESTE] GOL LIMITE FT (0.5 / 1.5 / 2.5)*\n\n"
                             f"⚽ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
-                            f"⏱ Minuto: {minuto}' (Odd Mínima Alvo: 1.70+)\n"
-                            f"💡 *Critério:* Jogo 0x0 na reta final, monitorando o comportamento para o gol limite!"
-                        )
-                        requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto_alerta, "parse_mode": "Markdown"})
-                    
-                    # =========================================================================
-                    # ⚡ PRIORIDADE MÁXIMA 3: GOL LIMITE 1.5 FT (SEGUNDO TEMPO - 60' a 88')
-                    # =========================================================================
-                    elif gols_totais == 1 and (60 <= minuto <= 88):
-                        texto_alerta = (
-                            f"⚡ *ALERTA: GOL LIMITE 1.5 FT (Busca do 2º Gol)* 🚀\n\n"
-                            f"⚽ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
-                            f"⏱ Minuto: {minuto}' (Odd Mínima Alvo: 1.70+)\n"
-                            f"💡 *Critério:* Partida com 1 gol, fluxo aberto a partir dos 60' em busca do segundo tento."
+                            f"⏱ Minuto: {minuto}' | Total de Gols: {gols_totais}\n"
+                            f"💡 *Alerta de Volume (Odd Alvo 1.70+)*"
                         )
                         requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto_alerta, "parse_mode": "Markdown"})
                         
