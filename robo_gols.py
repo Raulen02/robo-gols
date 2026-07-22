@@ -21,7 +21,6 @@ def monitorar_jogos_ao_vivo():
     time.sleep(5)
     url_msg = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
     
-    # Mensagem de teste para confirmar que o robô reiniciou no modo quantitativo
     try:
         requests.post(url_msg, json={
             "chat_id": CHAT_ID, 
@@ -29,7 +28,7 @@ def monitorar_jogos_ao_vivo():
             "parse_mode": "Markdown"
         })
     except Exception as e:
-        print(f"Erro inicial: {e})"
+        print(f"Erro inicial: {e}")
 
     while True:
         try:
@@ -56,9 +55,7 @@ def monitorar_jogos_ao_vivo():
                     placar_fora = evento.get("awayScore", {}).get("current", 0)
                     gols_totais = placar_casa + placar_fora
                     
-                    # =========================================================================
-                    # 🥇 TESTE 1: 1º TEMPO (HT) - 0.5 Gols (20' a 44' com jogo 0x0)
-                    # =========================================================================
+                    # 1º Tempo (HT) - Over 0.5 (20' a 44' com jogo 0x0)
                     if gols_totais == 0 and (20 <= minuto <= 44):
                         texto_alerta = (
                             f"🧪 *[TESTE] OVER 0.5 HT*\n\n"
@@ -68,10 +65,7 @@ def monitorar_jogos_ao_vivo():
                         )
                         requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto_alerta, "parse_mode": "Markdown"})
                     
-                    # =========================================================================
-                    # 🎯 TESTE 2: 2º TEMPO (FT) - Mercados Limite (0.5, 1.5 e 2.5) de 60' a 88'
-                    # O jogo só pode ter no máximo 2 gols totais para respeitar o limite de 2.5
-                    # =========================================================================
+                    # 2º Tempo (FT) - Mercados Limite (0.5, 1.5 e 2.5) de 60' a 88'
                     elif 0 <= gols_totais <= 2 and (60 <= minuto <= 88):
                         texto_alerta = (
                             f"🧪 *[TESTE] GOL LIMITE FT (0.5 / 1.5 / 2.5)*\n\n"
