@@ -15,20 +15,21 @@ RAPID_API_KEY = "79205a9d23msha37725343833c2ep114fc4jsn17b667a6327b"
 
 @app.route('/')
 def home():
-    return "Robo de Gols (Modo Teste Quantitativo) Operacional!"
+    return "Robo de Gols (Modo Rua / Antecipado) Operacional!"
 
 def monitorar_jogos_ao_vivo():
-    time.sleep(5)
+    time.sleep(2)
     url_msg = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
     
+    # Mensagem de boas-vindas confirmando a inicialização
     try:
         requests.post(url_msg, json={
             "chat_id": CHAT_ID, 
-            "text": "🟢 *Robô em Modo de Teste Quantitativo Ativado!*\n📊 *Filtros simplificados:* Caçando volume em HT (20'-44') e FT até 2.5 gols (60'-88') para testar os disparos.", 
+            "text": "🟢 *Robô Conectado (Modo Rua / Antecipado)*\n📊 *Novas Métricas:* HT (16'-44') e FT (55'-88') com antecedência para posições seguras!", 
             "parse_mode": "Markdown"
         })
     except Exception as e:
-        print(f"Erro inicial: {e}")
+        print(f"Erro ao enviar mensagem inicial: {e}")
 
     while True:
         try:
@@ -51,27 +52,41 @@ def monitorar_jogos_ao_vivo():
                     time_casa = evento.get("homeTeam", {}).get("name", "")
                     time_fora = evento.get("awayTeam", {}).get("name", "")
                     
+                    # Puxando o nome do campeonato / liga
+                    tournament = evento.get("tournament", {})
+                    nome_liga = tournament.get("name", "Campeonato Desconhecido")
+                    categoria = tournament.get("category", {}).get("name", "")
+                    liga_completa = f"{categoria} - {nome_liga}" if categoria else nome_liga
+                    
                     placar_casa = evento.get("homeScore", {}).get("current", 0)
                     placar_fora = evento.get("awayScore", {}).get("current", 0)
                     gols_totais = placar_casa + placar_fora
                     
-                    # 1º Tempo (HT) - Over 0.5 (20' a 44' com jogo 0x0)
-                    if gols_totais == 0 and (20 <= minuto <= 44):
+                    # =========================================================================
+                    # 🥇 1º TEMPO (HT) - ANTECIPADO (16' a 44' com jogo 0x0)
+                    # Alvo: Entra o aviso cedo (Odd base 1.65) para você estacionar e pegar 1.70+
+                    # =========================================================================
+                    if gols_totais == 0 and (16 <= minuto <= 44):
                         texto_alerta = (
-                            f"🧪 *[TESTE] OVER 0.5 HT*\n\n"
+                            f"🚨 *[ANTECIPADO] OVER 0.5 HT*\n\n"
+                            f"🏆 *Liga:* {liga_completa}\n"
                             f"⚽ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
                             f"⏱ Minuto: {minuto}' | Placar: 0x0\n"
-                            f"💡 *Alerta de Volume (Odd Alvo 1.69+)*"
+                            f"💡 *Aviso de Antecipação (Prepare-se para Odd 1.70+)*"
                         )
                         requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto_alerta, "parse_mode": "Markdown"})
                     
-                    # 2º Tempo (FT) - Mercados Limite (0.5, 1.5 e 2.5) de 60' a 88'
-                    elif 0 <= gols_totais <= 2 and (60 <= minuto <= 88):
+                    # =========================================================================
+                    # 🎯 2º TEMPO (FT) - GOL LIMITE (55' a 88' com até 2 gols totais)
+                    # Alvo: Antecipado a partir dos 55' para mercados 0.5, 1.5 e 2.5
+                    # =========================================================================
+                    elif 0 <= gols_totais <= 2 and (55 <= minuto <= 88):
                         texto_alerta = (
-                            f"🧪 *[TESTE] GOL LIMITE FT (0.5 / 1.5 / 2.5)*\n\n"
+                            f"🚨 *[ANTECIPADO] GOL LIMITE FT (0.5 / 1.5 / 2.5)*\n\n"
+                            f"🏆 *Liga:* {liga_completa}\n"
                             f"⚽ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
                             f"⏱ Minuto: {minuto}' | Total de Gols: {gols_totais}\n"
-                            f"💡 *Alerta de Volume (Odd Alvo 1.70+)*"
+                            f"💡 *Aviso de Antecipação (Prepare-se para Odd 1.70+)*"
                         )
                         requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto_alerta, "parse_mode": "Markdown"})
                         
