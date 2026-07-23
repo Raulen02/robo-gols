@@ -23,7 +23,7 @@ def testar_envio():
     try:
         r = requests.post(url_msg, json={
             "chat_id": CHAT_ID, 
-            "text": "🧠 *[TESTE DE LÓGICA PURA]*\nDeploy corrigido com sucesso! O robô agora prioriza a estrutura: Critério Técnico -> Aba/Campo de Busca -> Alerta Prático.", 
+            "text": "🧠 *[TESTE DE LÓGICA PURA]*\nDeploy atualizado com sucesso! O robô monitora as janelas de tempo (15'+ e 55'+) buscando o mercado de gols e a ODD alvo.", 
             "parse_mode": "Markdown"
         })
         if r.status_code == 200:
@@ -59,11 +59,11 @@ def monitorar_jogos_ao_vivo():
                     tipo_periodo = status_jogo.get("description", "") # "1st" ou "2nd"
                     minuto_bruto = status_jogo.get("minute", 0)
                     
-                    # Ignorar acréscimos: trava estritamente no tempo regulamentar de 0 a 45 por tempo
-                    if minuto_bruto > 45:
+                    if minuto_bruto > 90:
                         continue 
                         
                     minuto = minuto_bruto
+                    # Cálculo exato do tempo total decorrido na partida
                     minuto_total = minuto if tipo_periodo == "1st" else (45 + minuto)
                     
                     time_casa = evento.get("homeTeam", {}).get("name", "")
@@ -79,87 +79,41 @@ def monitorar_jogos_ao_vivo():
                     gols_totais = placar_casa + placar_fora
                     
                     # -------------------------------------------------------------------------
-                    # 1. 1º TEMPO (15' a 45' regulamentar | 0x0) -> Foco: Over 0.5 HT
+                    # 1. 1º TEMPO: A partir do minuto 15 até o intervalo (incluindo acréscimos)
                     # -------------------------------------------------------------------------
-                    if tipo_periodo == "1st" and 15 <= minuto <= 45 and gols_totais == 0:
-                        chave = f"{match_id}_1T_0.5HT"
+                    if tipo_periodo == "1st" and minuto >= 15:
+                        chave = f"{match_id}_1T_{minuto_total}"
                         if chave not in alerta_enviado:
                             texto = (
-                                f"🧠 *ANÁLISE DE MERCADO: OVER 0.5 HT*\n\n"
+                                f"⚽ *OPORTUNIDADE NO 1º TEMPO*\n\n"
                                 f"🏆 *Campeonato:* {liga_completa}\n"
-                                f"⚽ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
-                                f"⏱ *Tempo Regulamentar:* {minuto_total}º min (1º Tempo)\n\n"
-                                f"🔍 *1. O que procurar (Critério Técnico):*\n"
-                                f"• Partida travada em 0x0 com pressão territorial contínua de um ou ambos os lados.\n\n"
-                                f"📂 *2. Onde buscar (Abas / Campos do App):* \n"
-                                f"• **Aba Estatísticas (Filtro 1º Tempo):** Conferir contagem de chutes no alvo, chutes bloqueados e ataques perigosos.\n"
-                                f"• **Aba Odds:** Monitorar a cotação do mercado esticar na faixa ideal.\n\n"
-                                f"🎯 *3. Resultado da Pesquisa / Alvo:* Entrada técnica recomendada no *Over 0.5 Gols no 1º Tempo*."
+                                f"⚔️ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
+                                f"⏱ *Tempo:* {minuto_total}º min (1º Tempo)\n\n"
+                                f"🎯 *Critério de Mercado (Gols / ODD 1.65):*\n"
+                                f"• Janela de 15'+ ativa.\n"
+                                f"• **Aba de Gols:** Verifique se a cotação bateu exatamente em **1.65** para o padrão atual de placar ({placar_casa}x{placar_fora})."
                             )
                             requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
                             alerta_enviado[chave] = True
 
                     # -------------------------------------------------------------------------
-                    # 2. 2º TEMPO (10' a 45' regulamentar do 2T, total 55' a 90')
+                    # 2. 2º TEMPO: A partir do minuto 55 até o fim do jogo (incluindo acréscimos)
                     # -------------------------------------------------------------------------
-                    elif tipo_periodo == "2nd" and 10 <= minuto <= 45:
-                        
-                        # Cenário A: Jogo 0x0 no segundo tempo
-                        if gols_totais == 0:
-                            chave = f"{match_id}_2T_0.5FT_0x0"
-                            if chave not in alerta_enviado:
-                                texto = (
-                                    f"🧠 *ANÁLISE DE MERCADO: PRÓXIMO GOL / 0.5 FT*\n\n"
-                                    f"🏆 *Campeonato:* {liga_completa}\n"
-                                    f"⚽ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
-                                    f"⏱ *Tempo Regulamentar:* {minuto_total}º min (2º Tempo)\n\n"
-                                    f"🔍 *1. O que procurar (Critério Técnico):*\n"
-                                    f"• Jogo zerado na etapa complementar com forte aceleração ofensiva e volume alto.\n\n"
-                                    f"📂 *2. Onde buscar (Abas / Campos do App):*\n"
-                                    f"• **Aba Estatísticas (Gráfico de Fluxo):** Analisar qual time está sufocando o adversário no campo de ataque.\n"
-                                    f"• **Aba Odds:** Acompanhar o mercado de Próximo Gol para pegar cotações de valor.\n\n"
-                                    f"🎯 *3. Resultado da Pesquisa / Alvo:* Buscar o primeiro gol da partida aproveitando o desequilíbrio defensivo."
-                                )
-                                requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
-                                alerta_enviado[chave] = True
-
-                        # Cenário B: Jogo 1x0 ou 0x1 (1 gol)
-                        elif gols_totais == 1:
-                            chave = f"{match_id}_2T_1.5FT_1gols"
-                            if chave not in alerta_enviado:
-                                texto = (
-                                    f"🧠 *ANÁLISE DE MERCADO: OVER 1.5 FT*\n\n"
-                                    f"🏆 *Campeonato:* {liga_completa}\n"
-                                    f"⚽ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
-                                    f"⏱ *Tempo Regulamentar:* {minuto_total}º min | Placar: {placar_casa}x{placar_fora}\n\n"
-                                    f"🔍 *1. O que procurar (Critério Técnico):*\n"
-                                    f"• Cenário de 1 gol onde a equipe perdedor se atira ao ataque, criando transições e espaços.\n\n"
-                                    f"📂 *2. Onde buscar (Abas / Campos do App):*\n"
-                                    f"• **Aba Estatísticas:** Checar entradas no terço final e finalizações de dentro da área.\n"
-                                    f"• **Aba Odds:** Avaliar o mercado de Gols da Partida (Mais de 1.5).\n\n"
-                                    f"🎯 *3. Resultado da Pesquisa / Alvo:* Entrada no *Over 1.5 Gols no Jogo* (precisa de apenas mais 1 gol)."
-                                )
-                                requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
-                                alerta_enviado[chave] = True
-
-                        # Cenário C: Jogo 1x1 ou 2x0 (2 gols)
-                        elif gols_totais == 2:
-                            chave = f"{match_id}_2T_2.5FT_2gols"
-                            if chave not in alerta_enviado:
-                                texto = (
-                                    f"🧠 *ANÁLISE DE MERCADO: OVER 2.5 FT*\n\n"
-                                    f"🏆 *Campeonato:* {liga_completa}\n"
-                                    f"⚽ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
-                                    f"⏱ *Tempo Regulamentar:* {minuto_total}º min | Placar: {placar_casa}x{placar_fora}\n\n"
-                                    f"🔍 *1. O que procurar (Critério Técnico):*\n"
-                                    f"• Partida aberta, lá e cá, com alta frequência de finalizações de ambos os lados.\n\n"
-                                    f"📂 *2. Onde buscar (Abas / Campos do App):*\n"
-                                    f"• **Aba Estatísticas:** Validar constância de chutes ao gol e perigo real.\n"
-                                    f"• **Aba Odds:** Olhar o mercado de Gols da Partida (Mais de 2.5).\n\n"
-                                    f"🎯 *3. Resultado da Pesquisa / Alvo:* Entrada no *Over 2.5 Gols no Jogo* com alta probabilidade do 3º tento."
-                                )
-                                requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
-                                alarme_enviado = True # chave gravada
+                    elif tipo_periodo == "2nd" and minuto_total >= 55:
+                        chave = f"{match_id}_2T_{minuto_total}"
+                        if chave not in alerta_enviado:
+                            texto = (
+                                f"🔥 *OPORTUNIDADE NO 2º TEMPO*\n\n"
+                                f"🏆 *Campeonato:* {liga_completa}\n"
+                                f"⚔️ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
+                                f"⏱ *Tempo:* {minuto_total}º min (2º Tempo)\n\n"
+                                f"🎯 *Critério de Mercado (Gols / ODD 1.65):*\n"
+                                f"• Janela de 55'+ ativa.\n"
+                                f"• Placar atual: **{placar_casa}x{placar_fora}**\n"
+                                f"• **Aba de Gols:** Valide se o mercado de gols atingiu a ODD de **1.65** para esta faixa."
+                            )
+                            requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
+                            alerta_enviado[chave] = True
                                 
         except Exception as err:
             print(f"Erro na varredura: {err}")
