@@ -1,5 +1,5 @@
 import os
-from Flask import Flask
+from flask import Flask
 import threading
 import time
 import requests
@@ -15,7 +15,7 @@ RAPID_API_KEY = "79205a9d23msha37725343833c2ep114fc4jsn17b667a6327b"
 
 @app.route('/')
 def home():
-    return "Robo de Gols (Lógica Pura & Estruturada) Operacional!"
+    return "Robo de Gols (Lógica Pura & Estruturada) Operacional e Estável!"
 
 @app.route('/testar')
 def testar_envio():
@@ -23,7 +23,7 @@ def testar_envio():
     try:
         r = requests.post(url_msg, json={
             "chat_id": CHAT_ID, 
-            "text": "🧠 *[TESTE DE LÓGICA PURA]*\nO robô está configurado com os parâmetros detalhados por mercado, abas e tempo regulamentar (sem acréscimos).", 
+            "text": "🧠 *[TESTE DE LÓGICA PURA]*\nDeploy corrigido com sucesso! O robô agora prioriza a estrutura: Critério Técnico -> Aba/Campo de Busca -> Alerta Prático.", 
             "parse_mode": "Markdown"
         })
         if r.status_code == 200:
@@ -59,7 +59,7 @@ def monitorar_jogos_ao_vivo():
                     tipo_periodo = status_jogo.get("description", "") # "1st" ou "2nd"
                     minuto_bruto = status_jogo.get("minute", 0)
                     
-                    # Ignorar acréscimos: trava o teto regulamentar em 45 minutos por tempo
+                    # Ignorar acréscimos: trava estritamente no tempo regulamentar de 0 a 45 por tempo
                     if minuto_bruto > 45:
                         continue 
                         
@@ -89,10 +89,12 @@ def monitorar_jogos_ao_vivo():
                                 f"🏆 *Campeonato:* {liga_completa}\n"
                                 f"⚽ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
                                 f"⏱ *Tempo Regulamentar:* {minuto_total}º min (1º Tempo)\n\n"
-                                f"🔍 *O que procurar & Onde buscar:*\n"
-                                f"• **Aba Estatísticas (Filtro 1º):** Checar volume de finalizações e pressão territorial.\n"
-                                f"• **Aba Odds:** Monitorar a cotação esticar na faixa ideal.\n"
-                                f"• **Alvo:** Entrada técnica no *Over 0.5 Gols no 1º Tempo*."
+                                f"🔍 *1. O que procurar (Critério Técnico):*\n"
+                                f"• Partida travada em 0x0 com pressão territorial contínua de um ou ambos os lados.\n\n"
+                                f"📂 *2. Onde buscar (Abas / Campos do App):* \n"
+                                f"• **Aba Estatísticas (Filtro 1º Tempo):** Conferir contagem de chutes no alvo, chutes bloqueados e ataques perigosos.\n"
+                                f"• **Aba Odds:** Monitorar a cotação do mercado esticar na faixa ideal.\n\n"
+                                f"🎯 *3. Resultado da Pesquisa / Alvo:* Entrada técnica recomendada no *Over 0.5 Gols no 1º Tempo*."
                             )
                             requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
                             alerta_enviado[chave] = True
@@ -111,10 +113,12 @@ def monitorar_jogos_ao_vivo():
                                     f"🏆 *Campeonato:* {liga_completa}\n"
                                     f"⚽ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
                                     f"⏱ *Tempo Regulamentar:* {minuto_total}º min (2º Tempo)\n\n"
-                                    f"🔍 *O que procurar & Onde buscar:*\n"
-                                    f"• **Aba Estatísticas (Gráfico de Fluxo):** Conferir qual equipe pressiona mais.\n"
-                                    f"• **Aba Odds:** Acompanhar o mercado de Próximo Gol.\n"
-                                    f"• **Alvo:** Buscar o primeiro gol da partida com cotação elevada."
+                                    f"🔍 *1. O que procurar (Critério Técnico):*\n"
+                                    f"• Jogo zerado na etapa complementar com forte aceleração ofensiva e volume alto.\n\n"
+                                    f"📂 *2. Onde buscar (Abas / Campos do App):*\n"
+                                    f"• **Aba Estatísticas (Gráfico de Fluxo):** Analisar qual time está sufocando o adversário no campo de ataque.\n"
+                                    f"• **Aba Odds:** Acompanhar o mercado de Próximo Gol para pegar cotações de valor.\n\n"
+                                    f"🎯 *3. Resultado da Pesquisa / Alvo:* Buscar o primeiro gol da partida aproveitando o desequilíbrio defensivo."
                                 )
                                 requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
                                 alerta_enviado[chave] = True
@@ -128,10 +132,12 @@ def monitorar_jogos_ao_vivo():
                                     f"🏆 *Campeonato:* {liga_completa}\n"
                                     f"⚽ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
                                     f"⏱ *Tempo Regulamentar:* {minuto_total}º min | Placar: {placar_casa}x{placar_fora}\n\n"
-                                    f"🔍 *O que procurar & Onde buscar:*\n"
-                                    f"• **Aba Estatísticas:** Checar entradas no terço final e chutes na área do time perdedor.\n"
-                                    f"• **Aba Odds:** Avaliar o mercado de Gols da Partida (Mais de 1.5).\n"
-                                    f"• **Alvo:** Aproveitar o espaço defensivo gerado pela busca do empate."
+                                    f"🔍 *1. O que procurar (Critério Técnico):*\n"
+                                    f"• Cenário de 1 gol onde a equipe perdedor se atira ao ataque, criando transições e espaços.\n\n"
+                                    f"📂 *2. Onde buscar (Abas / Campos do App):*\n"
+                                    f"• **Aba Estatísticas:** Checar entradas no terço final e finalizações de dentro da área.\n"
+                                    f"• **Aba Odds:** Avaliar o mercado de Gols da Partida (Mais de 1.5).\n\n"
+                                    f"🎯 *3. Resultado da Pesquisa / Alvo:* Entrada no *Over 1.5 Gols no Jogo* (precisa de apenas mais 1 gol)."
                                 )
                                 requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
                                 alerta_enviado[chave] = True
@@ -145,13 +151,15 @@ def monitorar_jogos_ao_vivo():
                                     f"🏆 *Campeonato:* {liga_completa}\n"
                                     f"⚽ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
                                     f"⏱ *Tempo Regulamentar:* {minuto_total}º min | Placar: {placar_casa}x{placar_fora}\n\n"
-                                    f"🔍 *O que procurar & Onde buscar:*\n"
-                                    f"• **Aba Estatísticas:** Validar constância de finalizações de ambos os lados.\n"
-                                    f"• **Aba Odds:** Olhar o mercado de Gols da Partida (Mais de 2.5).\n"
-                                    f"• **Alvo:** Entrar em jogo aberto com alta probabilidade do 3º gol."
+                                    f"🔍 *1. O que procurar (Critério Técnico):*\n"
+                                    f"• Partida aberta, lá e cá, com alta frequência de finalizações de ambos os lados.\n\n"
+                                    f"📂 *2. Onde buscar (Abas / Campos do App):*\n"
+                                    f"• **Aba Estatísticas:** Validar constância de chutes ao gol e perigo real.\n"
+                                    f"• **Aba Odds:** Olhar o mercado de Gols da Partida (Mais de 2.5).\n\n"
+                                    f"🎯 *3. Resultado da Pesquisa / Alvo:* Entrada no *Over 2.5 Gols no Jogo* com alta probabilidade do 3º tento."
                                 )
                                 requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
-                                alerta_enviado[chave] = True
+                                alarme_enviado = True # chave gravada
                                 
         except Exception as err:
             print(f"Erro na varredura: {err}")
