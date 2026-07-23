@@ -15,7 +15,7 @@ RAPID_API_KEY = "79205a9d23msha37725343833c2ep114fc4jsn17b667a6327b"
 
 @app.route('/')
 def home():
-    return "Robo de Gols (Lógica Pura & Estruturada) Operacional e Estável!"
+    return "Robo em Teste Básico de Conexão!"
 
 @app.route('/testar')
 def testar_envio():
@@ -23,20 +23,20 @@ def testar_envio():
     try:
         r = requests.post(url_msg, json={
             "chat_id": CHAT_ID, 
-            "text": "🧠 *[TESTE DE LÓGICA PURA]*\nDeploy atualizado com sucesso! O robô monitora as janelas de tempo (15'+ e 55'+) buscando o mercado de gols e a ODD alvo.", 
+            "text": "🟢 *[TESTE BÁSICO]* Servidor do Render online e pronto para o teste de captura!", 
             "parse_mode": "Markdown"
         })
         if r.status_code == 200:
-            return "Mensagem de teste enviada com sucesso para o Telegram!"
+            return "Mensagem de teste enviada com sucesso!"
         else:
-            return f"Erro ao enviar do Telegram: {r.text}"
+            return f"Erro: {r.text}"
     except Exception as e:
         return f"Erro: {e}"
 
 def monitorar_jogos_ao_vivo():
-    time.sleep(2)
+    time.sleep(5)
     url_msg = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    alerta_enviado = {}
+    ja_enviado = set()
 
     while True:
         try:
@@ -46,79 +46,54 @@ def monitorar_jogos_ao_vivo():
                 "X-RapidAPI-Host": "sofascore.p.rapidapi.com"
             }
             
+            print("Consultando API do Sofascore...")
             resposta = requests.get(url_api, headers=headers, timeout=15)
             
             if resposta.status_code == 200:
                 dados = resposta.json()
                 eventos = dados.get("events", [])
+                print(f"Jogos encontrados na API: {len(eventos)}")
                 
+                # Pega os primeiros 3 jogos da lista apenas para testar se a informação flui
+                contador = 0
                 for evento in eventos:
                     match_id = evento.get("id")
-                    status_jogo = evento.get("status", {})
                     
-                    tipo_periodo = status_jogo.get("description", "") # "1st" ou "2nd"
-                    minuto_bruto = status_jogo.get("minute", 0)
-                    
-                    if minuto_bruto > 90:
-                        continue 
+                    if match_id in ja_enviado:
+                        continue
                         
-                    minuto = minuto_bruto
-                    # Cálculo exato do tempo total decorrido na partida
-                    minuto_total = minuto if tipo_periodo == "1st" else (45 + minuto)
+                    time_casa = evento.get("homeTeam", {}).get("name", "Casa")
+                    time_fora = evento.get("awayTeam", {}).get("name", "Fora")
                     
-                    time_casa = evento.get("homeTeam", {}).get("name", "")
-                    time_fora = evento.get("awayTeam", {}).get("name", "")
-                    
-                    tournament = evento.get("tournament", {})
-                    nome_liga = tournament.get("name", "Campeonato")
-                    categoria = tournament.get("category", {}).get("name", "")
-                    liga_completa = f"{categoria} - {nome_liga}" if categoria else nome_liga
+                    status_jogo = evento.get("status", {})
+                    minuto = status_jogo.get("minute", 0)
+                    periodo = status_jogo.get("description", "Ao Vivo")
                     
                     placar_casa = evento.get("homeScore", {}).get("current", 0)
                     placar_fora = evento.get("awayScore", {}).get("current", 0)
-                    gols_totais = placar_casa + placar_fora
                     
-                    # -------------------------------------------------------------------------
-                    # 1. 1º TEMPO: A partir do minuto 15 até o intervalo (incluindo acréscimos)
-                    # -------------------------------------------------------------------------
-                    if tipo_periodo == "1st" and minuto >= 15:
-                        chave = f"{match_id}_1T_{minuto_total}"
-                        if chave not in alerta_enviado:
-                            texto = (
-                                f"⚽ *OPORTUNIDADE NO 1º TEMPO*\n\n"
-                                f"🏆 *Campeonato:* {liga_completa}\n"
-                                f"⚔️ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
-                                f"⏱ *Tempo:* {minuto_total}º min (1º Tempo)\n\n"
-                                f"🎯 *Critério de Mercado (Gols / ODD 1.65):*\n"
-                                f"• Janela de 15'+ ativa.\n"
-                                f"• **Aba de Gols:** Verifique se a cotação bateu exatamente em **1.65** para o padrão atual de placar ({placar_casa}x{placar_fora})."
-                            )
-                            requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
-                            alerta_enviado[chave] = True
-
-                    # -------------------------------------------------------------------------
-                    # 2. 2º TEMPO: A partir do minuto 55 até o fim do jogo (incluindo acréscimos)
-                    # -------------------------------------------------------------------------
-                    elif tipo_periodo == "2nd" and minuto_total >= 55:
-                        chave = f"{match_id}_2T_{minuto_total}"
-                        if chave not in alerta_enviado:
-                            texto = (
-                                f"🔥 *OPORTUNIDADE NO 2º TEMPO*\n\n"
-                                f"🏆 *Campeonato:* {liga_completa}\n"
-                                f"⚔️ {time_casa} {placar_casa} x {placar_fora} {time_fora}\n"
-                                f"⏱ *Tempo:* {minuto_total}º min (2º Tempo)\n\n"
-                                f"🎯 *Critério de Mercado (Gols / ODD 1.65):*\n"
-                                f"• Janela de 55'+ ativa.\n"
-                                f"• Placar atual: **{placar_casa}x{placar_fora}**\n"
-                                f"• **Aba de Gols:** Valide se o mercado de gols atingiu a ODD de **1.65** para esta faixa."
-                            )
-                            requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
-                            alerta_enviado[chave] = True
-                                
+                    # Monta o alerta cru para testar a captura
+                    texto = (
+                        f"🚨 *TESTE DE CAPTURA DO SOFASCORE*\n\n"
+                        f"⚽ *{time_casa} {placar_casa} x {placar_fora} {time_fora}*\n"
+                        f"⏱ Status/Minuto: {minuto}' ({periodo})\n"
+                        f"🆔 ID da Partida: {match_id}"
+                    )
+                    
+                    requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
+                    ja_enviado.add(match_id)
+                    
+                    contador += 1
+                    if contador >= 2:  # Envia no máximo 2 para não lotar o chat de uma vez só
+                        break
+            else:
+                print(f"Erro na resposta da API Sofascore: {resposta.status_code} - {resposta.text}")
+                
         except Exception as err:
-            print(f"Erro na varredura: {err}")
+            print(f"Erro crítico no loop de captura: {err}")
             
-        time.sleep(30)
+        # Espera 60 segundos para o próximo ciclo de teste
+        time.sleep(60)
 
 thread = threading.Thread(target=monitorar_jogos_ao_vivo)
 thread.daemon = True
