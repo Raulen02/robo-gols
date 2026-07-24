@@ -10,8 +10,8 @@ RAPID_API_HOST = "sofascore6.p.rapidapi.com"
 @app.route('/')
 def home():
     try:
-        # Testando com a rota padrão correta da documentação do sofascore6
-        url_api = "https://sofascore6.p.rapidapi.com/api/v1/sport/football/events/live"
+        # Ajustado para a rota exata aceita por este provedor na RapidAPI
+        url_api = "https://sofascore6.p.rapidapi.com/api/sofascore/v1/events/live"
         headers = {
             "X-RapidAPI-Key": RAPID_API_KEY,
             "X-RapidAPI-Host": RAPID_API_HOST
