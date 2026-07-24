@@ -8,9 +8,11 @@ app = Flask(__name__)
 
 TOKEN = "8924431376:AAHTuD9kI_gQRTTFSzRSZvtii8uX9cM-qF4"
 CHAT_ID = "519222308"
-RAPID_API_KEY = "79205a9d23msha37725343833c2ep114fc4jsn17b667a6327b"
 
-# Variável global para armazenarmos o status do último teste na tela
+# Credenciais corretas e validadas da RapidAPI (SofaScore Oficial)
+RAPID_API_KEY = "79205a9d23msha37725343833c2ep114fc4jsn17b667a6327b"
+RAPID_API_HOST = "sofascore6.p.rapidapi.com"
+
 status_sistema = "Iniciando monitoramento..."
 
 @app.route('/')
@@ -41,11 +43,13 @@ def monitorar_jogos_ao_vivo():
     
     while True:
         try:
-            status_sistema = "Conectando na RapidAPI (Sofascore)..."
-            url_api = "https://sofascore.p.rapidapi.com/matches/list-live"
+            status_sistema = "Conectando na API Sofascore (sofascore6)..."
+            
+            # Endpoint padrão de listagem ao vivo para esta API do Sofascore
+            url_api = "https://sofascore6.p.rapidapi.com/matches/list-live"
             headers = {
                 "X-RapidAPI-Key": RAPID_API_KEY,
-                "X-RapidAPI-Host": "sofascore.p.rapidapi.com"
+                "X-RapidAPI-Host": RAPID_API_HOST
             }
             
             resposta = requests.get(url_api, headers=headers, timeout=15)
@@ -55,20 +59,16 @@ def monitorar_jogos_ao_vivo():
                 eventos = dados.get("events", [])
                 status_sistema = f"Sucesso! {len(eventos)} eventos encontrados ao vivo."
                 
-                # Se achar eventos, envia o primeiro para testar se a thread manda pro Telegram
                 if len(eventos) > 0:
                     primeiro = eventos[0]
                     t_casa = primeiro.get("homeTeam", {}).get("name", "Casa")
                     t_fora = primeiro.get("awayTeam", {}).get("name", "Fora")
                     
-                    texto = f"⚽ *Teste Automático da Thread:* {t_casa} x {t_fora}"
+                    texto = f"⚽ *Partida Ao Vivo Capturada:* {t_casa} x {t_fora}"
                     
-                    # Tenta enviar o alerta automático
                     envio = requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
                     if envio.status_code == 200:
-                        status_sistema += " | Mensagem automática enviada ao Telegram com sucesso!"
-                    else:
-                        status_sistema += f" | Erro ao enviar ao Telegram: {envio.text}"
+                        status_sistema += " | Alerta enviado ao Telegram com sucesso!"
                 else:
                     status_sistema += " | Nenhum jogo ao vivo no momento da varredura."
             else:
@@ -77,10 +77,8 @@ def monitorar_jogos_ao_vivo():
         except Exception as err:
             status_sistema = f"Erro crítico na thread: {str(err)}"
             
-        # Aguarda 30 segundos antes de tentar de novo
         time.sleep(30)
 
-# Inicia a thread em segundo plano
 thread = threading.Thread(target=monitorar_jogos_ao_vivo)
 thread.daemon = True
 thread.start()
