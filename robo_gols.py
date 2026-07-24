@@ -20,20 +20,39 @@ def home():
     return f"Status Atual do Robô no Render: <br><b>{status_sistema}</b>"
 
 @app.route('/testar')
-def testar_envio():
+def testar_api():
+    global status_sistema
     url_msg = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+    
     try:
-        r = requests.post(url_msg, json={
-            "chat_id": CHAT_ID, 
-            "text": "🟢 *[TESTE MANUAL]* O Render disparou com sucesso via rota web!", 
-            "parse_mode": "Markdown"
-        })
-        if r.status_code == 200:
-            return "Mensagem de teste manual enviada para o Telegram com sucesso!"
+        url_api = "https://sofascore6.p.rapidapi.com/api/sofascore/v1/sport/football/events/live"
+        headers = {
+            "X-RapidAPI-Key": RAPID_API_KEY,
+            "X-RapidAPI-Host": RAPID_API_HOST
+        }
+        
+        resposta = requests.get(url_api, headers=headers, timeout=15)
+        
+        if resposta.status_code == 200:
+            dados = resposta.json()
+            eventos = dados.get("events", [])
+            status_sistema = f"Sucesso na API! {len(eventos)} eventos encontrados."
+            
+            if len(eventos) > 0:
+                primeiro = eventos[0]
+                t_casa = primeiro.get("homeTeam", {}).get("name", "Casa")
+                t_fora = primeiro.get("awayTeam", {}).get("name", "Fora")
+                
+                texto = f"⚽ *Teste Direto da API:* {t_casa} x {t_fora}"
+                requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
+                return f"API respondeu com sucesso! Encontrados {len(eventos)} jogos. Primeiro jogo ({t_casa} x {t_fora}) enviado para o Telegram!"
+            else:
+                return "API conectou com sucesso (Status 200), mas retornou 0 jogos ao vivo no momento."
         else:
-            return f"Erro do Telegram: {r.text}"
+            return f"Erro retornado pela API: Status {resposta.status_code} - {resposta.text}"
+            
     except Exception as e:
-        return f"Erro: {e}"
+        return f"Erro crítico ao tentar ler a API: {e}"
 
 def monitorar_jogos_ao_vivo():
     global status_sistema
@@ -42,9 +61,6 @@ def monitorar_jogos_ao_vivo():
     
     while True:
         try:
-            status_sistema = "Consultando a API oficial Sofascore6..."
-            
-            # Usando a estrutura base que aparece na imagem da sua RapidAPI
             url_api = "https://sofascore6.p.rapidapi.com/api/sofascore/v1/sport/football/events/live"
             headers = {
                 "X-RapidAPI-Key": RAPID_API_KEY,
@@ -56,22 +72,17 @@ def monitorar_jogos_ao_vivo():
             if resposta.status_code == 200:
                 dados = resposta.json()
                 eventos = dados.get("events", [])
-                status_sistema = f"Sucesso! {len(eventos)} eventos encontrados ao vivo."
+                status_sistema = f"Sucesso! {len(eventos)} eventos ao vivo."
                 
                 if len(eventos) > 0:
                     primeiro = eventos[0]
                     t_casa = primeiro.get("homeTeam", {}).get("name", "Casa")
                     t_fora = primeiro.get("awayTeam", {}).get("name", "Fora")
                     
-                    texto = f"⚽ *Partida Ao Vivo Capturada:* {t_casa} x {t_fora}"
-                    
-                    envio = requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
-                    if envio.status_code == 200:
-                        status_sistema += " | Alerta enviado ao Telegram!"
-                else:
-                    status_sistema += " | Nenhum jogo ao vivo no momento."
+                    texto = f"⚽ *Partida Ao Vivo:* {t_casa} x {t_fora}"
+                    requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
             else:
-                status_sistema = f"Erro na API Sofascore: Status {resposta.status_code} - {resposta.text}"
+                status_sistema = f"Erro na API: Status {resposta.status_code} - {resposta.text}"
                 
         except Exception as err:
             status_sistema = f"Erro crítico na thread: {str(err)}"
