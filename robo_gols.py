@@ -9,6 +9,7 @@ app = Flask(__name__)
 TOKEN = "8924431376:AAHTuD9kI_gQRTTFSzRSZvtii8uX9cM-qF4"
 CHAT_ID = "519222308"
 
+# Chave oficial atualizada e vinculada ao seu plano da RapidAPI
 RAPID_API_KEY = "79205a9d23msha37725343833c2ep114fc4jsn17b667a6327b"
 RAPID_API_HOST = "sofascore6.p.rapidapi.com"
 
