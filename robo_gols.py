@@ -9,7 +9,6 @@ app = Flask(__name__)
 TOKEN = "8924431376:AAHTuD9kI_gQRTTFSzRSZvtii8uX9cM-qF4"
 CHAT_ID = "519222308"
 
-# Credenciais corretas e validadas da RapidAPI (SofaScore Oficial)
 RAPID_API_KEY = "79205a9d23msha37725343833c2ep114fc4jsn17b667a6327b"
 RAPID_API_HOST = "sofascore6.p.rapidapi.com"
 
@@ -43,10 +42,10 @@ def monitorar_jogos_ao_vivo():
     
     while True:
         try:
-            status_sistema = "Conectando na API Sofascore (sofascore6)..."
+            status_sistema = "Consultando a API oficial Sofascore6..."
             
-            # Endpoint padrão de listagem ao vivo para esta API do Sofascore
-            url_api = "https://sofascore6.p.rapidapi.com/matches/list-live"
+            # Usando a estrutura base que aparece na imagem da sua RapidAPI
+            url_api = "https://sofascore6.p.rapidapi.com/api/sofascore/v1/sport/football/events/live"
             headers = {
                 "X-RapidAPI-Key": RAPID_API_KEY,
                 "X-RapidAPI-Host": RAPID_API_HOST
@@ -68,9 +67,9 @@ def monitorar_jogos_ao_vivo():
                     
                     envio = requests.post(url_msg, json={"chat_id": CHAT_ID, "text": texto, "parse_mode": "Markdown"})
                     if envio.status_code == 200:
-                        status_sistema += " | Alerta enviado ao Telegram com sucesso!"
+                        status_sistema += " | Alerta enviado ao Telegram!"
                 else:
-                    status_sistema += " | Nenhum jogo ao vivo no momento da varredura."
+                    status_sistema += " | Nenhum jogo ao vivo no momento."
             else:
                 status_sistema = f"Erro na API Sofascore: Status {resposta.status_code} - {resposta.text}"
                 
